@@ -5,10 +5,7 @@ import android.os.Bundle
 import android.text.method.HideReturnsTransformationMethod
 import android.text.method.PasswordTransformationMethod
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import com.example.ppapb_loginflow.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
@@ -19,57 +16,70 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        setupClickListeners()
+    }
+
+    private fun setupClickListeners() {
         with(binding) {
             btnRegister.setOnClickListener {
-                val username = binding.edtUsername.text.toString()
-                val email = binding.edtEmail.text.toString()
-                val telp = binding.edtTelp.text.toString()
-                val password = binding.edtPassword.text.toString()
-
-                getSharedPreferences("UserData", MODE_PRIVATE).edit().apply {
-                    putString("username", username)
-                    putString("email", email)
-                    putString("telp", telp)
-                    putString("password", password)
-                    apply()
-                }
-
                 if (validateInputs()) {
-                    Toast.makeText(
-                        this@MainActivity,
-                        "Akun telah berhasil dibuat.",
-                        Toast.LENGTH_SHORT
-                    ).show()
-
-                    startActivity(Intent(this@MainActivity, LoginActivity::class.java))
+                    saveUserData()
+                    Toast.makeText(this@MainActivity, "Akun telah berhasil dibuat.", Toast.LENGTH_SHORT).show()
+                    navigateToLogin()
                 }
             }
 
             btnLogin.setOnClickListener {
-                startActivity(Intent(this@MainActivity, LoginActivity::class.java))
+                navigateToLogin()
             }
 
             btnShowPassword.setOnClickListener {
-                if (edtPassword.transformationMethod == PasswordTransformationMethod.getInstance()) {
-                    edtPassword.transformationMethod = HideReturnsTransformationMethod.getInstance()
-                    btnShowPassword.setImageResource(R.drawable.ic_visibility_on)
-                } else {
-                    edtPassword.transformationMethod = PasswordTransformationMethod.getInstance()
-                    btnShowPassword.setImageResource(R.drawable.ic_visibility_off)
-                }
-            }
-
-            btnRegister.setOnClickListener {
-                startActivity(Intent(this@MainActivity, LoginActivity::class.java))
+                togglePasswordVisibility()
             }
         }
     }
 
     private fun validateInputs(): Boolean {
-        if (!binding.checkboxTerms.isChecked) {
-            Toast.makeText(this, "Please agree to the Terms and Conditions", Toast.LENGTH_SHORT).show()
-            return false
+        with(binding) {
+            when {
+                !checkboxTerms.isChecked -> {
+                    Toast.makeText(this@MainActivity,"Silakan setujui Syarat dan Ketentuan", Toast.LENGTH_SHORT).show()
+                    return false
+                }
+            }
+            return true
         }
-        return true
+    }
+
+    private fun saveUserData() {
+        val userData = getSharedPreferences("UserData", MODE_PRIVATE).edit()
+        userData.apply {
+            putString("username", binding.edtUsername.text.toString().trim())
+            putString("email", binding.edtEmail.text.toString().trim())
+            putString("telp", binding.edtTelp.text.toString().trim())
+            putString("password", binding.edtPassword.text.toString())
+            apply()
+        }
+    }
+
+    private fun togglePasswordVisibility() {
+        with(binding) {
+            if (edtPassword.transformationMethod == PasswordTransformationMethod.getInstance()) {
+                edtPassword.transformationMethod = HideReturnsTransformationMethod.getInstance()
+                btnShowPassword.setImageResource(R.drawable.ic_visibility_on)
+            } else {
+                edtPassword.transformationMethod = PasswordTransformationMethod.getInstance()
+                btnShowPassword.setImageResource(R.drawable.ic_visibility_off)
+            }
+            edtPassword.setSelection(edtPassword.text!!.length)
+        }
+    }
+
+    private fun navigateToLogin() {
+        startActivity(Intent(this@MainActivity, LoginActivity::class.java))
+    }
+
+    private fun showToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 }
